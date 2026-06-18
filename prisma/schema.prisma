@@ -1,0 +1,258 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  LEARNER
+  ADMIN
+}
+
+enum ExperienceLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+enum DifficultyLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+enum ResourceType {
+  ARTICLE
+  VIDEO
+  DOCUMENTATION
+  PROJECT
+}
+
+enum CareerGoal {
+  FRONTEND_DEVELOPER
+  BACKEND_DEVELOPER
+  FULLSTACK_DEVELOPER
+  MOBILE_DEVELOPER
+  DATA_SCIENTIST
+  DEVOPS_ENGINEER
+}
+
+model User {
+  id                String @id @default(uuid())
+
+  fullName          String
+  email             String @unique
+  passwordHash      String
+
+  role              UserRole @default(LEARNER)
+
+  careerGoal        CareerGoal?
+  experienceLevel   ExperienceLevel?
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  learningPath      LearningPath?
+
+  progress          UserProgress[]
+  quizResults       QuizResult[]
+  recommendations   Recommendation[]
+  revisions         RevisionSchedule[]
+
+  analytics         LearningAnalytics?
+}
+
+model LearningTrack {
+  id            String @id @default(cuid())
+
+  name          String
+  description   String?
+
+  createdAt     DateTime @default(now())
+
+  topics        Topic[]
+}
+
+model Topic {
+  id                    String @id @default(cuid())
+
+  trackId               String
+  track                 LearningTrack @relation(fields: [trackId], references: [id])
+
+  title                 String
+  description           String?
+
+  difficultyLevel       DifficultyLevel
+
+  prerequisiteTopicId   String?
+
+  prerequisiteTopic     Topic? @relation("Prerequisite", fields: [prerequisiteTopicId], references: [id])
+  dependentTopics       Topic[] @relation("Prerequisite")
+
+  resources             LearningResource[]
+  assessments           Assessment[]
+
+  progress              UserProgress[]
+  recommendations       Recommendation[]
+  revisions             RevisionSchedule[]
+
+  learningPathTopics    LearningPathTopic[]
+
+  createdAt             DateTime @default(now())
+}
+
+model LearningResource {
+  id              String @id @default(cuid())
+
+  topicId         String
+  topic           Topic @relation(fields: [topicId], references: [id])
+
+  title           String
+
+  type            ResourceType
+
+  url             String
+
+  createdAt       DateTime @default(now())
+}
+
+model LearningPath {
+  id              String @id @default(cuid())
+
+  userId          String @unique
+  user            User @relation(fields: [userId], references: [id])
+
+  title           String
+
+  createdAt       DateTime @default(now())
+
+  topics          LearningPathTopic[]
+}
+
+model LearningPathTopic {
+  id              String @id @default(cuid())
+
+  learningPathId  String
+  learningPath    LearningPath @relation(fields: [learningPathId], references: [id])
+
+  topicId         String
+  topic           Topic @relation(fields: [topicId], references: [id])
+
+  sequenceOrder   Int
+}
+
+model Assessment {
+  id              String @id @default(cuid())
+
+  topicId         String
+  topic           Topic @relation(fields: [topicId], references: [id])
+
+  title           String
+
+  passingScore    Int @default(50)
+
+  questions       Question[]
+  results         QuizResult[]
+
+  createdAt       DateTime @default(now())
+}
+
+model Question {
+  id              String @id @default(cuid())
+
+  assessmentId    String
+  assessment      Assessment @relation(fields: [assessmentId], references: [id])
+
+  questionText    String
+
+  optionA         String
+  optionB         String
+  optionC         String
+  optionD         String
+
+  correctAnswer   String
+}
+
+model QuizResult {
+  id              String @id @default(cuid())
+
+  userId          String
+  user            User @relation(fields: [userId], references: [id])
+
+  assessmentId    String
+  assessment      Assessment @relation(fields: [assessmentId], references: [id])
+
+  score           Float
+
+  completedAt     DateTime @default(now())
+}
+
+model UserProgress {
+  id                  String @id @default(cuid())
+
+  userId              String
+  user                User @relation(fields: [userId], references: [id])
+
+  topicId             String
+  topic               Topic @relation(fields: [topicId], references: [id])
+
+  completed           Boolean @default(false)
+
+  progressPercentage  Int @default(0)
+
+  completedAt         DateTime?
+}
+
+model Recommendation {
+  id              String @id @default(cuid())
+
+  userId          String
+  user            User @relation(fields: [userId], references: [id])
+
+  topicId         String
+  topic           Topic @relation(fields: [topicId], references: [id])
+
+  reason          String
+
+  generatedAt     DateTime @default(now())
+}
+
+model RevisionSchedule {
+  id              String @id @default(cuid())
+
+  userId          String
+  user            User @relation(fields: [userId], references: [id])
+
+  topicId         String
+  topic           Topic @relation(fields: [topicId], references: [id])
+
+  reviewDate      DateTime
+
+  intervalDays    Int
+
+  easeFactor      Float
+
+  repetition      Int
+
+  lastReviewedAt  DateTime?
+}
+
+model LearningAnalytics {
+  id                  String @id @default(cuid())
+
+  userId              String @unique
+  user                User @relation(fields: [userId], references: [id])
+
+  topicsCompleted     Int @default(0)
+
+  averageScore        Float @default(0)
+
+  learningStreak      Int @default(0)
+
+  retentionRate       Float @default(0)
+
+  updatedAt           DateTime @updatedAt
+}
