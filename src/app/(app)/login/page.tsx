@@ -69,7 +69,7 @@ const LoginPage = () => {
         <p className="mt-4 text-center text-sm text-muted-foreground">
           New here?{" "}
           <Link
-            href="/login"
+            href="/register"
             className="font-medium text-primary hover:underline"
           >
             Create account
