@@ -16,4 +16,13 @@ export const registerSchema = yup.object({
     .min(8, "Minimum of 8 characters"),
 });
 
+export const loginSchema = yup.object({
+  email: yup
+    .string()
+    .required("email is required")
+    .email("input a valid email"),
+  password: yup.string().required("password is required"),
+});
+
 export type RegisterInput = yup.InferType<typeof registerSchema>;
+export type LoginInput = yup.InferType<typeof loginSchema>;

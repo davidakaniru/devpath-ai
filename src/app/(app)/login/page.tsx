@@ -1,34 +1,58 @@
 "use client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { User } from "@/lib/types";
+import { LoginInput, loginSchema } from "@/lib/validation/auth";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { Route } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
-import * as yup from "yup";
 
-const schema = yup.object({
-  email: yup
-    .string()
-    .required("email is required")
-    .email("input a valid email"),
-  password: yup
-    .string()
-    .required("password is required")
-    .min(8, "minimum of 8 characters"),
-});
-
-type RegisterData = yup.InferType<typeof schema>;
+interface Result {
+  user: User;
+  onboardingComplete: boolean;
+  error?: string;
+}
 
 const LoginPage = () => {
   const {
     register,
-    formState: { errors },
+    formState: { errors, isSubmitting },
     handleSubmit,
-  } = useForm({ resolver: yupResolver(schema), mode: "onChange" });
+  } = useForm({ resolver: yupResolver(loginSchema), mode: "onChange" });
 
-  const onSubmit = (data: RegisterData) => {
-    console.log("register user data", data);
+  const [serverError, setServerError] = useState<string | null>(null);
+  const router = useRouter();
+
+  const onSubmit = async (data: LoginInput) => {
+    setServerError(null);
+
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+
+      const result: Result = await res.json();
+
+      if (!res.ok) {
+        setServerError(result.error ?? "Something went wrong.");
+        return;
+      }
+
+      localStorage.setItem("user", JSON.stringify(result.user));
+
+      if (!result.onboardingComplete) {
+        router.push("/onboarding");
+      }
+
+      router.push("/dashboard");
+    } catch {
+      setServerError("Something went wrong. Please try again.");
+    }
   };
   return (
     <div
@@ -62,8 +86,14 @@ const LoginPage = () => {
             errorMessage={errors.password?.message}
           />
 
-          <Button type="submit" className="w-full">
-            Login
+          {serverError && (
+            <p className="text-[13px] text-destructive bg-destructive/8 border border-destructive/15 rounded-xl px-3.5 py-2.5">
+              {serverError}
+            </p>
+          )}
+
+          <Button type="submit" className="w-full" disabled={isSubmitting}>
+            {isSubmitting ? "Logging in.." : "Login"}
           </Button>
         </form>
         <p className="mt-4 text-center text-sm text-muted-foreground">
