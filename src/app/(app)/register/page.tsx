@@ -5,18 +5,46 @@ import { RegisterInput, registerSchema } from "@/lib/validation/auth";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { Route } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 
 const RegisterPage = () => {
   const {
     register,
-    formState: { errors },
+    formState: { errors, isSubmitting },
     handleSubmit,
-  } = useForm({ resolver: yupResolver(registerSchema), mode: "onChange" });
+  } = useForm<RegisterInput>({
+    resolver: yupResolver(registerSchema),
+    mode: "onChange",
+  });
 
-  const onSubmit = (data: RegisterInput) => {
-    console.log("register user data", data);
+  const [serverError, setServerError] = useState<string | null>(null);
+  const router = useRouter();
+
+  const onSubmit = async (data: RegisterInput) => {
+    setServerError(null);
+
+    try {
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+
+      const result = await res.json();
+
+      if (!res.ok) {
+        setServerError(result.error ?? "Something went wrong.");
+        return;
+      }
+
+      router.push("/onboarding");
+    } catch {
+      setServerError("Something went wrong. Please try again.");
+    }
   };
+
   return (
     <div
       className="dark flex min-h-screen items-center justify-center px-4"
@@ -58,8 +86,14 @@ const RegisterPage = () => {
             errorMessage={errors.password?.message}
           />
 
-          <Button type="submit" className="w-full">
-            Create Account
+          {serverError && (
+            <p className="text-[13px] text-destructive bg-destructive/8 border border-destructive/15 rounded-xl px-3.5 py-2.5">
+              {serverError}
+            </p>
+          )}
+
+          <Button type="submit" className="w-full" disabled={isSubmitting}>
+            {isSubmitting ? "Creating Account..." : "Create Account"}
           </Button>
         </form>
         <p className="mt-4 text-center text-sm text-muted-foreground">
