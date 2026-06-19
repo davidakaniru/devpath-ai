@@ -1,4 +1,8 @@
-import { verifyPassword } from "@/lib/auth";
+import {
+  createSessionToken,
+  setSessionCookie,
+  verifyPassword,
+} from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { loginSchema } from "@/lib/validation/auth";
 import { NextRequest, NextResponse } from "next/server";
@@ -54,6 +58,14 @@ export async function POST(req: NextRequest) {
 
     const onboardingComplete = !!(user.careerGoal && user.experienceLevel);
 
+    const token = await createSessionToken({
+      userId: user.id,
+      email: user.email,
+      role: user.role,
+    });
+
+    await setSessionCookie(token);
+
     return NextResponse.json({
       user: {
         id: user.id,
@@ -65,7 +77,7 @@ export async function POST(req: NextRequest) {
     });
   } catch (err) {
     // handle unexpected errors
-    console.error("[register]", err);
+    console.error("[login]", err);
     return NextResponse.json(
       { error: "Something went wrong. Please try again." },
       { status: 500 },
