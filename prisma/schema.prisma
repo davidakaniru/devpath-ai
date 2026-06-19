@@ -40,6 +40,17 @@ enum CareerGoal {
   DEVOPS_ENGINEER
 }
 
+enum ConfidenceLevel {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum AssessmentStatus {
+  IN_PROGRESS
+  COMPLETED
+}
+
 model User {
   id                String @id @default(uuid())
 
@@ -61,6 +72,7 @@ model User {
   quizResults       QuizResult[]
   recommendations   Recommendation[]
   revisions         RevisionSchedule[]
+  onboardingAssessments OnboardingAssessment[]
 
   analytics         LearningAnalytics?
 }
@@ -255,4 +267,64 @@ model LearningAnalytics {
   retentionRate       Float @default(0)
 
   updatedAt           DateTime @updatedAt
+}
+
+model OnboardingAssessment {
+  id          String   @id @default(cuid())
+
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+
+  careerGoal  CareerGoal
+  status      AssessmentStatus @default(IN_PROGRESS)
+
+  questions   OnboardingQuestion[]
+  result      OnboardingResult?
+
+  startedAt   DateTime @default(now())
+  completedAt DateTime?
+}
+
+model OnboardingQuestion {
+  id              String   @id @default(cuid())
+
+  assessmentId    String
+  assessment      OnboardingAssessment @relation(fields: [assessmentId], references: [id])
+
+  questionNumber  Int
+  category        String
+  difficulty      String
+
+  questionText    String
+  optionA         String
+  optionB         String
+  optionC         String
+  optionD         String
+  correctOption   String
+
+  userAnswer      String?
+  confidence      ConfidenceLevel?
+  isCorrect       Boolean?
+
+  createdAt       DateTime @default(now())
+  answeredAt      DateTime?
+}
+
+model OnboardingResult {
+  id                String   @id @default(cuid())
+
+  assessmentId      String   @unique
+  assessment        OnboardingAssessment @relation(fields: [assessmentId], references: [id])
+
+  overallLevel      String
+  overallScore      Int
+  confidenceProfile String
+
+  strengths         String[]
+  weaknesses        String[]
+  categoryScores    Json
+  recommendedPath   Json
+  summary           String
+
+  createdAt         DateTime @default(now())
 }

@@ -46,7 +46,8 @@ const LoginPage = () => {
       localStorage.setItem("user", JSON.stringify(result.user));
 
       if (!result.onboardingComplete) {
-        router.push("/onboarding");
+        router.push("/onboarding/goal");
+        return;
       }
 
       router.push("/dashboard");

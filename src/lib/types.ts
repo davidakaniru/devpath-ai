@@ -6,3 +6,12 @@ export type User = {
   email: string;
   role: UserRole;
 };
+
+// {
+//   "questionNumber": 1,
+//   "difficulty": "medium",
+//   "category": "fundamentals",
+//   "question": "Question text",
+//   "options": { "A": "...", "B": "...", "C": "...", "D": "..." },
+//   "correctOption": "B"
+// }

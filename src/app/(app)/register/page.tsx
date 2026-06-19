@@ -39,7 +39,7 @@ const RegisterPage = () => {
         return;
       }
 
-      router.push("/onboarding");
+      router.push("/onboarding/goal");
     } catch {
       setServerError("Something went wrong. Please try again.");
     }
