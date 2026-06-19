@@ -1,10 +1,41 @@
 "use client";
 import { careerGoals } from "@/lib/data";
 import { ArrowRight, Check, Route } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 const OnboardingGoal = () => {
   const [careerGoal, setCareerGoal] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const router = useRouter();
+
+  async function handleContinue() {
+    if (!careerGoal) return;
+    setError("");
+    setLoading(true);
+
+    try {
+      const res = await fetch("/api/user/onboarding", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ careerGoal }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.error ?? "Something went wrong.");
+        return;
+      }
+
+      router.push("/onboarding/assessment");
+    } catch {
+      setError("Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  }
 
   return (
     <div
@@ -31,12 +62,12 @@ const OnboardingGoal = () => {
         </div>
 
         <div className="mt-10 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {careerGoals.map(({ desc, id, title, icon: Icon }) => {
-            const isSelected = title === careerGoal;
+          {careerGoals.map(({ desc, id, title, icon: Icon, value }) => {
+            const isSelected = value === careerGoal;
             return (
               <button
                 key={id}
-                onClick={() => setCareerGoal(title)}
+                onClick={() => setCareerGoal(value)}
                 className={`relative rounded-xl border-2 p-5 text-left transition-all ${
                   isSelected
                     ? "border-primary bg-primary/5 shadow-(--shadow-glow)"
@@ -60,10 +91,17 @@ const OnboardingGoal = () => {
           })}
         </div>
 
+        {error && (
+          <p className="text-[13px] text-destructive bg-destructive/8 border border-destructive/15 rounded-xl px-3.5 py-2.5">
+            {error}
+          </p>
+        )}
+
         <div className="mt-10 flex justify-center">
           <button
-            disabled={!careerGoal}
-            className="inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-(--shadow-glow) hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+            disabled={!careerGoal || loading}
+            className="inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-(--shadow-glow) hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
+            onClick={handleContinue}
           >
             Continue <ArrowRight className="h-4 w-4" />
           </button>
