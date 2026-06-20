@@ -32,9 +32,12 @@ interface Result {
 }
 
 const levelStyles: Record<string, string> = {
-  BEGINNER: "bg-blue-500/15 text-blue-400 border-blue-500/30",
-  INTERMEDIATE: "bg-amber-500/15 text-amber-400 border-amber-500/30",
-  ADVANCED: "bg-emerald-500/15 text-emerald-400 border-emerald-500/30",
+  Beginner: "bg-blue-500/15 text-blue-400 border-blue-500/30",
+  "Early Intermediate": "bg-blue-500/15 text-blue-400 border-blue-500/30",
+  Intermediate: "bg-amber-500/15 text-amber-400 border-amber-500/30",
+  "Advanced Intermediate":
+    "bg-emerald-500/15 text-emerald-400 border-emerald-500/30",
+  "Senior Ready": "bg-emerald-500/15 text-emerald-400 border-emerald-500/30",
 };
 
 function scoreColor(score: number) {
@@ -83,7 +86,10 @@ const OnboardingResultsPage = () => {
           <p className="text-[13px] text-destructive bg-destructive/8 border border-destructive/15 rounded-xl px-3.5 py-2.5">
             {error || "No results found."}
           </p>
-          <Button className="mt-6" onClick={() => router.push("/onboarding/goal")}>
+          <Button
+            className="mt-6"
+            onClick={() => router.push("/onboarding/goal")}
+          >
             Restart assessment <ArrowRight className="h-4 w-4" />
           </Button>
         </div>
@@ -216,7 +222,9 @@ const OnboardingResultsPage = () => {
 
         {/* recommended path */}
         <div className="mt-6 rounded-xl border-2 border-border bg-card p-6">
-          <h3 className="font-display font-semibold">Recommended Learning Path</h3>
+          <h3 className="font-display font-semibold">
+            Recommended Learning Path
+          </h3>
           <div className="mt-4 flex flex-col gap-3">
             {sortedPath.map((step, idx) => (
               <div
@@ -246,7 +254,7 @@ const OnboardingResultsPage = () => {
         </div>
 
         <div className="mt-10 flex justify-center">
-          <Button size="lg" onClick={() => router.push("/")}>
+          <Button size="lg" onClick={() => router.push("/dashboard")}>
             Continue to dashboard <ArrowRight className="h-4 w-4" />
           </Button>
         </div>
