@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import type { DifficultyLevel, ReviewRating } from "../../generated/prisma/client";
 
 export async function recalculateAnalytics(userId: string) {
   const [topicsCompleted, reviewLogs, latestResult] = await Promise.all([
@@ -67,4 +68,132 @@ export async function recalculateAnalytics(userId: string) {
       retentionRate,
     },
   });
+}
+
+const ACTIVITY_WINDOW_DAYS = 14;
+const RATING_KEYS: ReviewRating[] = ["AGAIN", "HARD", "GOOD", "EASY"];
+
+export interface AnalyticsData {
+  analytics: {
+    topicsCompleted: number;
+    averageScore: number;
+    learningStreak: number;
+    retentionRate: number;
+  } | null;
+  categoryScores: Record<string, number> | null;
+  ratingBreakdown: Record<ReviewRating, number>;
+  totalReviews: number;
+  activity: { date: string; count: number }[];
+  difficultyBreakdown: {
+    difficultyLevel: DifficultyLevel;
+    completed: number;
+    total: number;
+  }[];
+}
+
+export async function getAnalyticsData(userId: string): Promise<AnalyticsData> {
+  const since = new Date();
+  since.setDate(since.getDate() - (ACTIVITY_WINDOW_DAYS - 1));
+  since.setHours(0, 0, 0, 0);
+
+  const [analytics, latestAssessment, ratingCounts, recentLogs, learningPath] =
+    await Promise.all([
+      prisma.learningAnalytics.findUnique({ where: { userId } }),
+      prisma.onboardingAssessment.findFirst({
+        where: { userId, status: "COMPLETED" },
+        orderBy: { completedAt: "desc" },
+        include: { result: true },
+      }),
+      prisma.reviewLog.groupBy({
+        by: ["rating"],
+        where: { userId },
+        _count: { _all: true },
+      }),
+      prisma.reviewLog.findMany({
+        where: { userId, reviewedAt: { gte: since } },
+        select: { reviewedAt: true },
+      }),
+      prisma.learningPath.findUnique({
+        where: { userId },
+        include: {
+          topics: {
+            include: {
+              topic: {
+                select: {
+                  difficultyLevel: true,
+                  progress: { where: { userId }, select: { completed: true } },
+                },
+              },
+            },
+          },
+        },
+      }),
+    ]);
+
+  const ratingBreakdown = RATING_KEYS.reduce(
+    (acc, rating) => {
+      acc[rating] =
+        ratingCounts.find((r) => r.rating === rating)?._count._all ?? 0;
+      return acc;
+    },
+    {} as Record<ReviewRating, number>,
+  );
+  const totalReviews = Object.values(ratingBreakdown).reduce(
+    (sum, count) => sum + count,
+    0,
+  );
+
+  const countsByDay = new Map<string, number>();
+  for (const log of recentLogs) {
+    const day = log.reviewedAt.toISOString().slice(0, 10);
+    countsByDay.set(day, (countsByDay.get(day) ?? 0) + 1);
+  }
+  const activity = Array.from({ length: ACTIVITY_WINDOW_DAYS }, (_, i) => {
+    const date = new Date(since);
+    date.setDate(date.getDate() + i);
+    const key = date.toISOString().slice(0, 10);
+    return { date: key, count: countsByDay.get(key) ?? 0 };
+  });
+
+  const difficultyTotals = new Map<
+    DifficultyLevel,
+    { completed: number; total: number }
+  >();
+  for (const { topic } of learningPath?.topics ?? []) {
+    const bucket = difficultyTotals.get(topic.difficultyLevel) ?? {
+      completed: 0,
+      total: 0,
+    };
+    bucket.total += 1;
+    if (topic.progress[0]?.completed) bucket.completed += 1;
+    difficultyTotals.set(topic.difficultyLevel, bucket);
+  }
+  const difficultyBreakdown = Array.from(
+    difficultyTotals,
+    ([difficultyLevel, { completed, total }]) => ({
+      difficultyLevel,
+      completed,
+      total,
+    }),
+  );
+
+  return {
+    analytics: analytics
+      ? {
+          topicsCompleted: analytics.topicsCompleted,
+          averageScore: analytics.averageScore,
+          learningStreak: analytics.learningStreak,
+          retentionRate: analytics.retentionRate,
+        }
+      : null,
+    categoryScores:
+      (latestAssessment?.result?.categoryScores as Record<
+        string,
+        number
+      > | null) ?? null,
+    ratingBreakdown,
+    totalReviews,
+    activity,
+    difficultyBreakdown,
+  };
 }
