@@ -57,6 +57,21 @@ const OnboardingAssessment = () => {
         return;
       }
 
+      // Generate the learning path — non-blocking if it fails
+      try {
+        const pathRes = await fetch("/api/learning-path/generate", {
+          method: "POST",
+        });
+        if (!pathRes.ok) {
+          const pathData = await pathRes.json();
+          toast.warning(
+            pathData.error ?? "Could not generate your learning path yet.",
+          );
+        }
+      } catch {
+        toast.warning("Could not generate your learning path yet.");
+      }
+
       router.push("/onboarding/results");
     } catch {
       setError("Failed to analyze assessment.");
