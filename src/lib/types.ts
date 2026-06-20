@@ -6,3 +6,12 @@ export type User = {
   email: string;
   role: UserRole;
 };
+
+export interface AnswerRecord {
+  questionNumber: number;
+  category: string;
+  difficulty: string;
+  userAnswer: string;
+  confidence: string;
+  correct: boolean;
+}

@@ -1,6 +1,9 @@
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { buildInitializationPrompt } from "@/lib/prompts/assessment";
+import {
+  buildInitializationPrompt,
+  CAREER_GOAL_LABELS,
+} from "@/lib/prompts/assessment";
 import { questionSchema } from "@/lib/prompts/schemas";
 import { GoogleGenAI } from "@google/genai";
 import { NextResponse } from "next/server";
@@ -28,7 +31,7 @@ export async function POST() {
 
     const response = await ai.models.generateContent({
       model: "gemini-2.0-flash",
-      contents: buildInitializationPrompt(user.careerGoal),
+      contents: buildInitializationPrompt(CAREER_GOAL_LABELS[user.careerGoal]),
       config: {
         responseMimeType: "application/json",
         responseSchema: questionSchema,
