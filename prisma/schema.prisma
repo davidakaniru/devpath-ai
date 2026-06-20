@@ -216,6 +216,8 @@ model UserProgress {
   progressPercentage  Int @default(0)
 
   completedAt         DateTime?
+
+  @@unique([userId, topicId])
 }
 
 model Recommendation {

@@ -13,6 +13,7 @@ import {
   Video,
   Wrench,
 } from "lucide-react";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 
 interface Resource {
@@ -141,11 +142,38 @@ const LearningPathPage = () => {
     );
   }
 
-  if (error || !path) {
+  if (error) {
     return (
       <p className="text-[13px] text-destructive bg-destructive/8 border border-destructive/15 rounded-xl px-3.5 py-2.5">
-        {error || "No learning path found."}
+        {error}
       </p>
+    );
+  }
+
+  if (!path) {
+    return (
+      <div className="rounded-xl border-2 border-primary/30 bg-primary/5 p-6">
+        <div className="flex items-start gap-4">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/15 text-primary">
+            <Sparkles className="h-5 w-5" />
+          </div>
+          <div>
+            <h3 className="font-display font-semibold">
+              No learning path yet
+            </h3>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Complete the onboarding assessment to get a personalized,
+              AI-generated learning path.
+            </p>
+            <Link
+              href="/onboarding/goal"
+              className="mt-4 inline-flex items-center gap-1.5 rounded-lg bg-primary px-3.5 py-2 text-sm font-medium text-primary-foreground hover:opacity-90"
+            >
+              Start assessment <ChevronRight className="h-4 w-4" />
+            </Link>
+          </div>
+        </div>
+      </div>
     );
   }
 

@@ -1,6 +1,5 @@
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { CAREER_GOAL_LABELS } from "@/lib/prompts/assessment";
 import { NextResponse } from "next/server";
 
 export async function GET() {
@@ -10,19 +9,7 @@ export async function GET() {
   }
 
   try {
-    const user = await prisma.user.findUnique({
-      where: { id: session.userId },
-      select: { careerGoal: true },
-    });
-
-    if (!user?.careerGoal) {
-      return NextResponse.json(
-        { error: "Please select a career goal first." },
-        { status: 400 },
-      );
-    }
-
-    let learningPath = await prisma.learningPath.findUnique({
+    const learningPath = await prisma.learningPath.findUnique({
       where: { userId: session.userId },
       include: {
         topics: {
@@ -33,55 +20,13 @@ export async function GET() {
     });
 
     if (!learningPath) {
-      const trackLabel = CAREER_GOAL_LABELS[user.careerGoal];
-      const track = await prisma.learningTrack.findFirst({
-        where: { name: trackLabel },
-        include: { topics: { orderBy: { createdAt: "asc" } } },
-      });
-
-      if (!track) {
-        return NextResponse.json(
-          { error: "No learning track found for your career goal." },
-          { status: 404 },
-        );
-      }
-
-      await prisma.$transaction([
-        prisma.learningPath.create({
-          data: {
-            userId: session.userId,
-            title: `${trackLabel} Path`,
-            topics: {
-              create: track.topics.map((topic, index) => ({
-                topicId: topic.id,
-                sequenceOrder: index,
-              })),
-            },
-          },
-        }),
-        prisma.userProgress.createMany({
-          data: track.topics.map((topic) => ({
-            userId: session.userId,
-            topicId: topic.id,
-          })),
-        }),
-      ]);
-
-      learningPath = await prisma.learningPath.findUnique({
-        where: { userId: session.userId },
-        include: {
-          topics: {
-            orderBy: { sequenceOrder: "asc" },
-            include: { topic: { include: { resources: true } } },
-          },
-        },
-      });
+      return NextResponse.json({ path: null });
     }
 
     const progressRecords = await prisma.userProgress.findMany({
       where: {
         userId: session.userId,
-        topicId: { in: learningPath!.topics.map((t) => t.topicId) },
+        topicId: { in: learningPath.topics.map((t) => t.topicId) },
       },
     });
     const progressByTopic = new Map(
@@ -91,7 +36,7 @@ export async function GET() {
     let previousCompleted = true;
     let foundCurrent = false;
 
-    const topics = learningPath!.topics.map(({ topic, sequenceOrder }) => {
+    const topics = learningPath.topics.map(({ topic, sequenceOrder }) => {
       const progress = progressByTopic.get(topic.id);
       const completed = progress?.completed ?? false;
       const locked = !previousCompleted;
@@ -126,8 +71,8 @@ export async function GET() {
 
     return NextResponse.json({
       path: {
-        id: learningPath!.id,
-        title: learningPath!.title,
+        id: learningPath.id,
+        title: learningPath.title,
         overallProgress,
         completedCount,
         totalCount: topics.length,
