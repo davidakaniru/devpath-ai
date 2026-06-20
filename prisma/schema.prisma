@@ -56,6 +56,13 @@ enum MessageRole {
   ASSISTANT
 }
 
+enum ReviewRating {
+  AGAIN
+  HARD
+  GOOD
+  EASY
+}
+
 model Conversation {
   id        String   @id @default(cuid())
 
@@ -102,6 +109,7 @@ model User {
   quizResults       QuizResult[]
   recommendations   Recommendation[]
   revisions         RevisionSchedule[]
+  reviewLogs        ReviewLog[]
   onboardingAssessments OnboardingAssessment[]
 
   analytics         LearningAnalytics?
@@ -140,6 +148,7 @@ model Topic {
   progress              UserProgress[]
   recommendations       Recommendation[]
   revisions             RevisionSchedule[]
+  reviewLogs            ReviewLog[]
 
   learningPathTopics    LearningPathTopic[]
 
@@ -284,6 +293,21 @@ model RevisionSchedule {
   lastReviewedAt  DateTime?
 
   @@unique([userId, topicId])
+}
+
+model ReviewLog {
+  id          String       @id @default(cuid())
+
+  userId      String
+  user        User         @relation(fields: [userId], references: [id])
+
+  topicId     String
+  topic       Topic        @relation(fields: [topicId], references: [id])
+
+  rating      ReviewRating
+  quality     Int
+
+  reviewedAt  DateTime     @default(now())
 }
 
 model LearningAnalytics {

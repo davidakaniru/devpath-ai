@@ -1,3 +1,4 @@
+import { recalculateAnalytics } from "@/lib/analytics";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
@@ -42,15 +43,7 @@ export async function PATCH(
       },
     });
 
-    const topicsCompleted = await prisma.userProgress.count({
-      where: { userId: session.userId, completed: true },
-    });
-
-    await prisma.learningAnalytics.upsert({
-      where: { userId: session.userId },
-      update: { topicsCompleted },
-      create: { userId: session.userId, topicsCompleted },
-    });
+    await recalculateAnalytics(session.userId);
 
     if (completed) {
       await prisma.revisionSchedule.upsert({

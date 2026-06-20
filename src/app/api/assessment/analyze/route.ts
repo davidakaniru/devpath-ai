@@ -1,3 +1,4 @@
+import { recalculateAnalytics } from "@/lib/analytics";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import {
@@ -91,6 +92,8 @@ export async function POST(req: NextRequest) {
         data: { experienceLevel: mapToExperienceLevel(analysis.overallLevel) },
       }),
     ]);
+
+    await recalculateAnalytics(session.userId);
 
     return NextResponse.json({ result });
   } catch (err) {

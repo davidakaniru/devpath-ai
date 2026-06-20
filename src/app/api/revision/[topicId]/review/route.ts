@@ -1,3 +1,4 @@
+import { recalculateAnalytics } from "@/lib/analytics";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { calculateSM2, RATING_TO_QUALITY } from "@/lib/sm2";
@@ -43,6 +44,17 @@ export async function POST(
       where: { id: schedule.id },
       data: { ...result, lastReviewedAt: new Date() },
     });
+
+    await prisma.reviewLog.create({
+      data: {
+        userId: session.userId,
+        topicId,
+        rating: rating as keyof typeof RATING_TO_QUALITY,
+        quality,
+      },
+    });
+
+    await recalculateAnalytics(session.userId);
 
     return NextResponse.json({ schedule: updated });
   } catch (err) {
