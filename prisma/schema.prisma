@@ -51,6 +51,35 @@ enum AssessmentStatus {
   COMPLETED
 }
 
+enum MessageRole {
+  USER
+  ASSISTANT
+}
+
+model Conversation {
+  id        String   @id @default(cuid())
+
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id])
+
+  messages  Message[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Message {
+  id             String   @id @default(cuid())
+
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id])
+
+  role           MessageRole
+  content        String
+
+  createdAt      DateTime @default(now())
+}
+
 model User {
   id                String @id @default(uuid())
 
@@ -67,6 +96,7 @@ model User {
   updatedAt         DateTime @updatedAt
 
   learningPath      LearningPath?
+  conversation      Conversation?
 
   progress          UserProgress[]
   quizResults       QuizResult[]
