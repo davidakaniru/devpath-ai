@@ -53,13 +53,14 @@ const OnboardingAssessment = () => {
 
       if (!res.ok) {
         setError(data.error ?? "Failed to analyze assessment.");
+        toast.error(data.error ?? "Failed to analyze assessment.");
         return;
       }
 
       router.push("/onboarding/results");
     } catch {
       setError("Failed to analyze assessment.");
-      toast.error(error);
+      toast.error("Failed to analyze assessment.");
     } finally {
       setAnalyzing(false);
     }
@@ -86,6 +87,7 @@ const OnboardingAssessment = () => {
 
       if (!res.ok) {
         setError(data.error ?? "Something went wrong.");
+        toast.error(data.error ?? "Something went wrong.");
         return;
       }
 
@@ -99,7 +101,7 @@ const OnboardingAssessment = () => {
       setConfidence(null);
     } catch {
       setError("Something went wrong. Please try again.");
-      toast.error(error);
+      toast.error("Something went wrong. Please try again.");
     } finally {
       setSubmitting(false);
     }
