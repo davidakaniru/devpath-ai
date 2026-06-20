@@ -54,3 +54,37 @@ Adaptation Rules:
 8. Generate the next question only.
 9. Total assessment length is 15 questions. This is question ${nextNumber}.`;
 }
+
+export function buildAnalysisPrompt(
+  trackName: string,
+  history: AnswerRecord[],
+): string {
+  return `You are a senior technical learning advisor.
+Your task is to analyze a completed adaptive assessment and produce a detailed skill profile and personalized learning roadmap.
+
+Track: ${trackName}
+
+Assessment History:
+${JSON.stringify(history)}
+
+Evaluate: overall skill level, strengths, weaknesses, confidence calibration, knowledge gaps, and recommended learning path.
+
+Confidence Analysis: determine whether the learner underestimates their ability, has accurate self-assessment, or is overconfident in weak areas.`;
+}
+
+export function mapToExperienceLevel(
+  overallLevel: string,
+): "BEGINNER" | "INTERMEDIATE" | "ADVANCED" {
+  switch (overallLevel) {
+    case "Beginner":
+      return "BEGINNER";
+    case "Early Intermediate":
+    case "Intermediate":
+      return "INTERMEDIATE";
+    case "Advanced Intermediate":
+    case "Senior Ready":
+      return "ADVANCED";
+    default:
+      return "BEGINNER";
+  }
+}

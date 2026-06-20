@@ -44,6 +44,13 @@ export async function PATCH(req: NextRequest) {
       );
     }
 
+    if (question.assessment.status !== "IN_PROGRESS") {
+      return NextResponse.json(
+        { error: "Assessment has been completed." },
+        { status: 409 },
+      );
+    }
+
     if (question.userAnswer) {
       return NextResponse.json(
         { error: "Question already answered." },
