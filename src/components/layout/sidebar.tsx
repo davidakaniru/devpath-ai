@@ -29,6 +29,87 @@ interface SidebarProps {
   user: { fullName: string; email: string };
 }
 
+/** Animates width/opacity/margin instead of mounting-unmounting, so the
+ * collapse/expand transition reads as a smooth slide rather than a snap. */
+function Collapsible({
+  collapsed,
+  className,
+  children,
+}: {
+  collapsed: boolean;
+  className?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div
+      className={cn(
+        "overflow-hidden whitespace-nowrap transition-all duration-200",
+        collapsed ? "ml-0 max-w-0 opacity-0" : "ml-3 max-w-40 opacity-100",
+        className,
+      )}
+    >
+      {children}
+    </div>
+  );
+}
+
+function SidebarHeader({
+  collapsed,
+  onClose,
+}: {
+  collapsed: boolean;
+  onClose?: () => void;
+}) {
+  return (
+    <div className="flex items-center border-b border-sidebar-border px-4 py-4">
+      <Link
+        href="/dashboard"
+        className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg path-glow"
+      >
+        <Route className="h-3.5 w-3.5 text-white" />
+      </Link>
+      <Collapsible
+        collapsed={collapsed}
+        className="flex-1 truncate font-display text-base font-bold text-sidebar-foreground"
+      >
+        DevPath AI
+      </Collapsible>
+      {onClose && (
+        <button
+          onClick={onClose}
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-sidebar-foreground/70 hover:bg-sidebar-accent/60 cursor-pointer"
+          aria-label="Close menu"
+        >
+          <X className="h-4.5 w-4.5" />
+        </button>
+      )}
+    </div>
+  );
+}
+
+function CollapseToggle({
+  collapsed,
+  onToggle,
+}: {
+  collapsed: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <button
+      onClick={onToggle}
+      className="flex items-center border-t border-sidebar-border px-4 py-3 text-xs font-medium text-sidebar-foreground/60 hover:bg-sidebar-accent/40 hover:text-sidebar-foreground cursor-pointer"
+    >
+      <ChevronsLeft
+        className={cn(
+          "h-4 w-4 shrink-0 transition-transform duration-200",
+          collapsed && "rotate-180",
+        )}
+      />
+      <Collapsible collapsed={collapsed}>Collapse</Collapsible>
+    </button>
+  );
+}
+
 function NavLinks({
   collapsed,
   onNavigate,
@@ -49,15 +130,14 @@ function NavLinks({
             onClick={onNavigate}
             title={collapsed ? label : undefined}
             className={cn(
-              "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+              "flex items-center rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
               isActive
                 ? "bg-sidebar-accent text-sidebar-accent-foreground"
                 : "text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground",
-              collapsed && "justify-center px-0",
             )}
           >
             <Icon className="h-4.5 w-4.5 shrink-0" />
-            {!collapsed && <span>{label}</span>}
+            <Collapsible collapsed={collapsed}>{label}</Collapsible>
           </Link>
         );
       })}
@@ -82,10 +162,14 @@ export function Sidebar({ user }: SidebarProps) {
     router.push("/login");
   }
 
+  function toggleCollapsed() {
+    setCollapsed((prev) => !prev);
+  }
+
   return (
     <>
       {/* mobile topbar trigger */}
-      <div className="flex items-center justify-between border-b border-sidebar-border bg-sidebar px-4 py-3 lg:hidden">
+      <div className="flex w-full shrink-0 items-center justify-between border-b border-sidebar-border bg-sidebar px-4 py-3 lg:hidden">
         <Link href="/dashboard" className="flex items-center gap-2">
           <div className="flex h-7 w-7 items-center justify-center rounded-lg path-glow">
             <Route className="h-3.5 w-3.5 text-white" />
@@ -103,96 +187,64 @@ export function Sidebar({ user }: SidebarProps) {
         </button>
       </div>
 
-      {/* mobile drawer */}
-      {mobileOpen && (
-        <div className="fixed inset-0 z-50 lg:hidden">
-          <div
-            className="absolute inset-0 bg-black/60"
-            onClick={() => setMobileOpen(false)}
+      {/* mobile drawer — kept mounted (not conditionally rendered) so
+          open/close can transition via transform/opacity instead of
+          snapping in and out on mount/unmount */}
+      <div
+        className={cn(
+          "fixed inset-0 z-50 lg:hidden transition-opacity duration-200 ease-in-out",
+          mobileOpen ? "opacity-100" : "pointer-events-none opacity-0",
+        )}
+        aria-hidden={!mobileOpen}
+      >
+        <div
+          className="absolute inset-0 bg-black/60"
+          onClick={() => setMobileOpen(false)}
+        />
+        <aside
+          className={cn(
+            "absolute inset-y-0 left-0 flex max-w-[80vw] flex-col bg-sidebar shadow-2xl transition-[width,transform] duration-200 ease-in-out",
+            collapsed ? "w-20" : "w-64",
+            mobileOpen ? "translate-x-0" : "-translate-x-full",
+          )}
+        >
+          <SidebarHeader
+            collapsed={collapsed}
+            onClose={() => setMobileOpen(false)}
           />
-          <aside className="absolute inset-y-0 left-0 flex w-72 flex-col bg-sidebar">
-            <div className="flex items-center justify-between border-b border-sidebar-border px-4 py-4">
-              <div className="flex items-center gap-2">
-                <div className="flex h-7 w-7 items-center justify-center rounded-lg path-glow">
-                  <Route className="h-3.5 w-3.5 text-white" />
-                </div>
-                <span className="font-display text-base font-bold text-sidebar-foreground">
-                  DevPath AI
-                </span>
-              </div>
-              <button
-                onClick={() => setMobileOpen(false)}
-                className="flex h-8 w-8 items-center justify-center rounded-lg text-sidebar-foreground/70 hover:bg-sidebar-accent/60 cursor-pointer"
-                aria-label="Close menu"
-              >
-                <X className="h-4.5 w-4.5" />
-              </button>
-            </div>
-            <div className="flex-1 overflow-y-auto py-4">
-              <NavLinks
-                collapsed={false}
-                onNavigate={() => setMobileOpen(false)}
-              />
-            </div>
-            <SidebarFooter
-              collapsed={false}
-              initials={initials}
-              user={user}
-              onLogout={handleLogout}
+
+          <div className="flex-1 overflow-y-auto py-4">
+            <NavLinks
+              collapsed={collapsed}
+              onNavigate={() => setMobileOpen(false)}
             />
-          </aside>
-        </div>
-      )}
+          </div>
+
+          <CollapseToggle collapsed={collapsed} onToggle={toggleCollapsed} />
+
+          <SidebarFooter
+            collapsed={collapsed}
+            initials={initials}
+            user={user}
+            onLogout={handleLogout}
+          />
+        </aside>
+      </div>
 
       {/* desktop sidebar */}
       <aside
         className={cn(
-          "hidden shrink-0 flex-col border-r border-sidebar-border bg-sidebar transition-[width] duration-200 lg:flex",
+          "hidden shrink-0 flex-col border-r border-sidebar-border bg-sidebar transition-[width] duration-200 ease-in-out lg:flex",
           collapsed ? "w-18" : "w-64",
         )}
       >
-        <div
-          className={cn(
-            "flex items-center border-b border-sidebar-border px-4 py-4",
-            collapsed ? "justify-center px-0" : "justify-between",
-          )}
-        >
-          {!collapsed && (
-            <Link href="/dashboard" className="flex items-center gap-2">
-              <div className="flex h-7 w-7 items-center justify-center rounded-lg path-glow">
-                <Route className="h-3.5 w-3.5 text-white" />
-              </div>
-              <span className="font-display text-base font-bold text-sidebar-foreground">
-                DevPath AI
-              </span>
-            </Link>
-          )}
-          {collapsed && (
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg path-glow">
-              <Route className="h-3.5 w-3.5 text-white" />
-            </div>
-          )}
-        </div>
+        <SidebarHeader collapsed={collapsed} />
 
         <div className="flex-1 overflow-y-auto py-4">
           <NavLinks collapsed={collapsed} />
         </div>
 
-        <button
-          onClick={() => setCollapsed((prev) => !prev)}
-          className={cn(
-            "flex items-center gap-2 border-t border-sidebar-border px-4 py-3 text-xs font-medium text-sidebar-foreground/60 hover:bg-sidebar-accent/40 hover:text-sidebar-foreground cursor-pointer",
-            collapsed && "justify-center px-0",
-          )}
-        >
-          <ChevronsLeft
-            className={cn(
-              "h-4 w-4 shrink-0 transition-transform",
-              collapsed && "rotate-180",
-            )}
-          />
-          {!collapsed && <span>Collapse</span>}
-        </button>
+        <CollapseToggle collapsed={collapsed} onToggle={toggleCollapsed} />
 
         <SidebarFooter
           collapsed={collapsed}
@@ -217,25 +269,18 @@ function SidebarFooter({
   onLogout: () => void;
 }) {
   return (
-    <div
-      className={cn(
-        "flex items-center gap-3 border-t border-sidebar-border px-4 py-4",
-        collapsed && "justify-center px-0",
-      )}
-    >
+    <div className="flex items-center border-t border-sidebar-border px-4 py-4">
       <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/15 text-xs font-semibold text-primary">
         {initials}
       </div>
-      {!collapsed && (
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-medium text-sidebar-foreground">
-            {user.fullName}
-          </p>
-          <p className="truncate text-xs text-sidebar-foreground/50">
-            {user.email}
-          </p>
-        </div>
-      )}
+      <Collapsible collapsed={collapsed} className="min-w-0 flex-1">
+        <p className="truncate text-sm font-medium text-sidebar-foreground">
+          {user.fullName}
+        </p>
+        <p className="truncate text-xs text-sidebar-foreground/50">
+          {user.email}
+        </p>
+      </Collapsible>
       <button
         onClick={onLogout}
         title="Log out"

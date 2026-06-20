@@ -282,6 +282,8 @@ model RevisionSchedule {
   repetition      Int
 
   lastReviewedAt  DateTime?
+
+  @@unique([userId, topicId])
 }
 
 model LearningAnalytics {

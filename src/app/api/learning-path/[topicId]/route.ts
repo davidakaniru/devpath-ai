@@ -52,6 +52,27 @@ export async function PATCH(
       create: { userId: session.userId, topicsCompleted },
     });
 
+    if (completed) {
+      await prisma.revisionSchedule.upsert({
+        where: {
+          userId_topicId: { userId: session.userId, topicId },
+        },
+        update: {}, // no-op if it already exists — don't reset progress on re-toggle
+        create: {
+          userId: session.userId,
+          topicId,
+          repetition: 0,
+          easeFactor: 2.5, // SM-2's standard starting ease
+          intervalDays: 1,
+          reviewDate: (() => {
+            const d = new Date();
+            d.setDate(d.getDate() + 1);
+            return d;
+          })(),
+        },
+      });
+    }
+
     return NextResponse.json({ success: true });
   } catch (err) {
     console.error("[learningPathTopic]", err);
