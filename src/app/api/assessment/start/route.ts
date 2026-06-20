@@ -30,7 +30,7 @@ export async function POST() {
     const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
     const response = await ai.models.generateContent({
-      model: "gemini-2.0-flash",
+      model: "gemini-2.5-flash",
       contents: buildInitializationPrompt(CAREER_GOAL_LABELS[user.careerGoal]),
       config: {
         responseMimeType: "application/json",

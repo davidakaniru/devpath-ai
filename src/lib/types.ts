@@ -15,3 +15,12 @@ export interface AnswerRecord {
   confidence: string;
   correct: boolean;
 }
+
+export interface Question {
+  id: string;
+  questionNumber: number;
+  category: string;
+  difficulty: string;
+  questionText: string;
+  options: { A: string; B: string; C: string; D: string };
+}
