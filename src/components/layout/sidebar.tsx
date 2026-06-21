@@ -1,32 +1,22 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import {
-  BarChart3,
-  BrainCircuit,
-  ChevronsLeft,
-  History,
-  LayoutDashboard,
-  LogOut,
-  Menu,
-  Route,
-  Waypoints,
-  X,
-} from "lucide-react";
+import { ChevronsLeft, LogOut, LucideIcon, Menu, Route, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 
-const navItems = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/learning-path", label: "Learning Path", icon: Waypoints },
-  { href: "/revision", label: "Revision", icon: History },
-  { href: "/analytics", label: "Analytics", icon: BarChart3 },
-  { href: "/ai-assistant", label: "AI Assistant", icon: BrainCircuit },
-];
+export interface SidebarNavItem {
+  href: string;
+  label: string;
+  icon: LucideIcon;
+}
 
 interface SidebarProps {
   user: { fullName: string; email: string };
+  navItems: SidebarNavItem[];
+  homeHref: string;
+  brandLabel: string;
 }
 
 /** Animates width/opacity/margin instead of mounting-unmounting, so the
@@ -55,15 +45,19 @@ function Collapsible({
 
 function SidebarHeader({
   collapsed,
+  homeHref,
+  brandLabel,
   onClose,
 }: {
   collapsed: boolean;
+  homeHref: string;
+  brandLabel: string;
   onClose?: () => void;
 }) {
   return (
     <div className="flex items-center border-b border-sidebar-border px-4 py-4">
       <Link
-        href="/dashboard"
+        href={homeHref}
         className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg path-glow"
       >
         <Route className="h-3.5 w-3.5 text-white" />
@@ -72,7 +66,7 @@ function SidebarHeader({
         collapsed={collapsed}
         className="flex-1 truncate font-display text-base font-bold text-sidebar-foreground"
       >
-        DevPath AI
+        {brandLabel}
       </Collapsible>
       {onClose && (
         <button
@@ -112,17 +106,26 @@ function CollapseToggle({
 
 function NavLinks({
   collapsed,
+  navItems,
   onNavigate,
 }: {
   collapsed: boolean;
+  navItems: SidebarNavItem[];
   onNavigate?: () => void;
 }) {
   const pathname = usePathname();
 
+  // Pick the longest matching href rather than any prefix match, so a root
+  // item like "/admin" doesn't light up alongside "/admin/users" — both
+  // match the naive prefix check, but only the more specific one is "active".
+  const activeHref = navItems
+    .filter(({ href }) => pathname === href || pathname.startsWith(`${href}/`))
+    .sort((a, b) => b.href.length - a.href.length)[0]?.href;
+
   return (
     <nav className="flex flex-col gap-1 px-3">
       {navItems.map(({ href, label, icon: Icon }) => {
-        const isActive = pathname === href || pathname.startsWith(`${href}/`);
+        const isActive = href === activeHref;
         return (
           <Link
             key={href}
@@ -145,7 +148,7 @@ function NavLinks({
   );
 }
 
-export function Sidebar({ user }: SidebarProps) {
+export function Sidebar({ user, navItems, homeHref, brandLabel }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const router = useRouter();
@@ -170,12 +173,12 @@ export function Sidebar({ user }: SidebarProps) {
     <>
       {/* mobile topbar trigger */}
       <div className="flex w-full shrink-0 items-center justify-between border-b border-sidebar-border bg-sidebar px-4 py-3 lg:hidden">
-        <Link href="/dashboard" className="flex items-center gap-2">
+        <Link href={homeHref} className="flex items-center gap-2">
           <div className="flex h-7 w-7 items-center justify-center rounded-lg path-glow">
             <Route className="h-3.5 w-3.5 text-white" />
           </div>
           <span className="font-display text-base font-bold text-sidebar-foreground">
-            DevPath AI
+            {brandLabel}
           </span>
         </Link>
         <button
@@ -210,12 +213,15 @@ export function Sidebar({ user }: SidebarProps) {
         >
           <SidebarHeader
             collapsed={collapsed}
+            homeHref={homeHref}
+            brandLabel={brandLabel}
             onClose={() => setMobileOpen(false)}
           />
 
           <div className="flex-1 overflow-y-auto py-4">
             <NavLinks
               collapsed={collapsed}
+              navItems={navItems}
               onNavigate={() => setMobileOpen(false)}
             />
           </div>
@@ -238,10 +244,14 @@ export function Sidebar({ user }: SidebarProps) {
           collapsed ? "w-18" : "w-64",
         )}
       >
-        <SidebarHeader collapsed={collapsed} />
+        <SidebarHeader
+          collapsed={collapsed}
+          homeHref={homeHref}
+          brandLabel={brandLabel}
+        />
 
         <div className="flex-1 overflow-y-auto py-4">
-          <NavLinks collapsed={collapsed} />
+          <NavLinks collapsed={collapsed} navItems={navItems} />
         </div>
 
         <CollapseToggle collapsed={collapsed} onToggle={toggleCollapsed} />

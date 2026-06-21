@@ -43,7 +43,10 @@ const LoginPage = () => {
         return;
       }
 
-      localStorage.setItem("user", JSON.stringify(result.user));
+      if (result.user.role === "ADMIN") {
+        router.push("/admin");
+        return;
+      }
 
       if (!result.onboardingComplete) {
         router.push("/onboarding/goal");

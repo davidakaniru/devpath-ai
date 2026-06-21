@@ -1,49 +1,47 @@
+import { Sidebar } from "@/components/layout/sidebar";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { Sidebar } from "@/components/layout/sidebar";
 import {
+  Activity,
   BarChart3,
-  BrainCircuit,
-  History,
   LayoutDashboard,
-  Waypoints,
+  Library,
+  Users,
 } from "lucide-react";
 import { redirect } from "next/navigation";
 
 const navItems = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/learning-path", label: "Learning Path", icon: Waypoints },
-  { href: "/revision", label: "Revision", icon: History },
-  { href: "/analytics", label: "Analytics", icon: BarChart3 },
-  { href: "/ai-assistant", label: "AI Assistant", icon: BrainCircuit },
+  { href: "/admin", label: "Overview", icon: LayoutDashboard },
+  { href: "/admin/users", label: "Users", icon: Users },
+  { href: "/admin/content", label: "Content", icon: Library },
+  { href: "/admin/analytics", label: "Analytics", icon: BarChart3 },
+  { href: "/admin/monitoring", label: "Monitoring", icon: Activity },
 ];
 
-export default async function AppLayout({
+export default async function AdminLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   const session = await getSession();
-  if (!session) {
-    redirect("/login");
-  }
+
+  if (!session) redirect("/login");
+  if (session.role !== "ADMIN") redirect("/dashboard");
 
   const user = await prisma.user.findUnique({
     where: { id: session.userId },
     select: { fullName: true, email: true },
   });
 
-  if (!user) {
-    redirect("/login");
-  }
+  if (!user) redirect("/login");
 
   return (
     <div className="dark flex min-h-screen flex-col bg-background lg:flex-row">
       <Sidebar
         user={user}
         navItems={navItems}
-        homeHref="/dashboard"
-        brandLabel="DevPath AI"
+        homeHref="/admin"
+        brandLabel="DevPath Admin"
       />
       <main className="flex-1 overflow-y-auto">
         <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
