@@ -448,7 +448,15 @@ function TrackRow({
         {track._count.topics} topic{track._count.topics === 1 ? "" : "s"}
       </span>
       {error && <p className="text-xs text-destructive">{error}</p>}
-      <Button size="icon-xs" variant="ghost" onClick={() => setEditing(true)}>
+      <Button
+        size="icon-xs"
+        variant="ghost"
+        onClick={() => {
+          setName(track.name);
+          setDescription(track.description ?? "");
+          setEditing(true);
+        }}
+      >
         <Pencil className="h-3.5 w-3.5" />
       </Button>
       <Button
@@ -696,7 +704,17 @@ function TopicRow({
         {topic.resources.length === 1 ? "" : "s"}
       </span>
       {error && <p className="text-xs text-destructive">{error}</p>}
-      <Button size="icon-xs" variant="ghost" onClick={() => setEditing(true)}>
+      <Button
+        size="icon-xs"
+        variant="ghost"
+        onClick={() => {
+          setTitle(topic.title);
+          setDescription(topic.description ?? "");
+          setDifficultyLevel(topic.difficultyLevel);
+          setPrerequisiteTopicId(topic.prerequisiteTopicId ?? "");
+          setEditing(true);
+        }}
+      >
         <Pencil className="h-3.5 w-3.5" />
       </Button>
       <Button
@@ -928,7 +946,16 @@ function ResourceRow({
         {resource.title}
       </a>
       {error && <p className="text-xs text-destructive">{error}</p>}
-      <Button size="icon-xs" variant="ghost" onClick={() => setEditing(true)}>
+      <Button
+        size="icon-xs"
+        variant="ghost"
+        onClick={() => {
+          setTitle(resource.title);
+          setType(resource.type);
+          setUrl(resource.url);
+          setEditing(true);
+        }}
+      >
         <Pencil className="h-3.5 w-3.5" />
       </Button>
       <Button
