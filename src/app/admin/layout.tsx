@@ -1,22 +1,7 @@
 import { Sidebar } from "@/components/layout/sidebar";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import {
-  Activity,
-  BarChart3,
-  LayoutDashboard,
-  Library,
-  Users,
-} from "lucide-react";
 import { redirect } from "next/navigation";
-
-const navItems = [
-  { href: "/admin", label: "Overview", icon: LayoutDashboard },
-  { href: "/admin/users", label: "Users", icon: Users },
-  { href: "/admin/content", label: "Content", icon: Library },
-  { href: "/admin/analytics", label: "Analytics", icon: BarChart3 },
-  { href: "/admin/monitoring", label: "Monitoring", icon: Activity },
-];
 
 export default async function AdminLayout({
   children,
@@ -39,7 +24,7 @@ export default async function AdminLayout({
     <div className="dark flex min-h-screen flex-col bg-background lg:flex-row">
       <Sidebar
         user={user}
-        navItems={navItems}
+        variant="admin"
         homeHref="/admin"
         brandLabel="DevPath Admin"
       />

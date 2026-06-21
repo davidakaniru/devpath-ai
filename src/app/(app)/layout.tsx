@@ -1,22 +1,7 @@
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Sidebar } from "@/components/layout/sidebar";
-import {
-  BarChart3,
-  BrainCircuit,
-  History,
-  LayoutDashboard,
-  Waypoints,
-} from "lucide-react";
 import { redirect } from "next/navigation";
-
-const navItems = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/learning-path", label: "Learning Path", icon: Waypoints },
-  { href: "/revision", label: "Revision", icon: History },
-  { href: "/analytics", label: "Analytics", icon: BarChart3 },
-  { href: "/ai-assistant", label: "AI Assistant", icon: BrainCircuit },
-];
 
 export default async function AppLayout({
   children,
@@ -41,7 +26,7 @@ export default async function AppLayout({
     <div className="dark flex min-h-screen flex-col bg-background lg:flex-row">
       <Sidebar
         user={user}
-        navItems={navItems}
+        variant="learner"
         homeHref="/dashboard"
         brandLabel="DevPath AI"
       />

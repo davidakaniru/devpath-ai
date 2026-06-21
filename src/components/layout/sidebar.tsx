@@ -1,20 +1,58 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { ChevronsLeft, LogOut, LucideIcon, Menu, Route, X } from "lucide-react";
+import {
+  Activity,
+  BarChart3,
+  BrainCircuit,
+  ChevronsLeft,
+  History,
+  LayoutDashboard,
+  Library,
+  LogOut,
+  LucideIcon,
+  Menu,
+  Route,
+  Users,
+  Waypoints,
+  X,
+} from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 
-export interface SidebarNavItem {
+interface SidebarNavItem {
   href: string;
   label: string;
   icon: LucideIcon;
 }
 
+// Icon components are objects with methods (forwardRef), which can't cross
+// the server->client prop boundary — so nav items are defined here, inside
+// the client component, and selected via a plain serializable `variant`
+// string passed down from the server layouts instead.
+const NAV_ITEMS_BY_VARIANT = {
+  learner: [
+    { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+    { href: "/learning-path", label: "Learning Path", icon: Waypoints },
+    { href: "/revision", label: "Revision", icon: History },
+    { href: "/analytics", label: "Analytics", icon: BarChart3 },
+    { href: "/ai-assistant", label: "AI Assistant", icon: BrainCircuit },
+  ],
+  admin: [
+    { href: "/admin", label: "Overview", icon: LayoutDashboard },
+    { href: "/admin/users", label: "Users", icon: Users },
+    { href: "/admin/content", label: "Content", icon: Library },
+    { href: "/admin/analytics", label: "Analytics", icon: BarChart3 },
+    { href: "/admin/monitoring", label: "Monitoring", icon: Activity },
+  ],
+} satisfies Record<string, SidebarNavItem[]>;
+
+export type SidebarVariant = keyof typeof NAV_ITEMS_BY_VARIANT;
+
 interface SidebarProps {
   user: { fullName: string; email: string };
-  navItems: SidebarNavItem[];
+  variant: SidebarVariant;
   homeHref: string;
   brandLabel: string;
 }
@@ -148,7 +186,8 @@ function NavLinks({
   );
 }
 
-export function Sidebar({ user, navItems, homeHref, brandLabel }: SidebarProps) {
+export function Sidebar({ user, variant, homeHref, brandLabel }: SidebarProps) {
+  const navItems = NAV_ITEMS_BY_VARIANT[variant];
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const router = useRouter();
